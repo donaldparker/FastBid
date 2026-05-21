@@ -39,6 +39,10 @@ export default function JobsScreen() {
     router.push(`/(tabs)/explore?jobId=${jobId}`);
   };
 
+  const createProject = () => {
+    router.push('/project-onboard');
+  };
+
   if (!screenData) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -62,6 +66,10 @@ export default function JobsScreen() {
         <View style={styles.header}>
           <Text style={styles.kicker}>{memory.kicker}</Text>
           <Text style={styles.title}>{memory.headline}</Text>
+          <Pressable accessibilityLabel="Create project" onPress={createProject} style={styles.createButton}>
+            <MaterialIcons name="add" size={21} color="#FFFFFF" />
+            <Text style={styles.createButtonText}>Create project</Text>
+          </Pressable>
           <Text style={styles.subtitle}>{memory.description}</Text>
         </View>
 
@@ -217,6 +225,21 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 0,
     lineHeight: 33,
+  },
+  createButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#0F172A',
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 7,
+    minHeight: 44,
+    paddingHorizontal: 13,
+  },
+  createButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900',
   },
   subtitle: {
     color: '#475569',

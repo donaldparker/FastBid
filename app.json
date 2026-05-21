@@ -28,6 +28,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "cameraPermission": "FastBid uses the camera to attach job photos to bid line items.",
+          "photosPermission": "FastBid uses selected photos to document bid line items."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
