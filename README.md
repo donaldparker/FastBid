@@ -26,8 +26,8 @@ npm run web
 
 ## Current Prototype
 
-- `Bid` tab: mobile bid intake, generated quote preview, line items, and pre-send risk flags.
-- `Memory` tab: similar historical jobs, estimator defaults, and the intended AI/RAG stack.
+- `Home` tab: current jobs loaded from the mock JSON API, estimator defaults, and the intended AI/RAG stack.
+- `Bid` tab: selected job details, generated quote preview, line items, and pre-send risk flags.
 
 ## MVP Architecture Direction
 

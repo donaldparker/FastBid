@@ -1,149 +1,156 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import type { ComponentProps } from 'react';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type MaterialIconName = ComponentProps<typeof MaterialIcons>['name'];
+import {
+  getCurrentJobs,
+  type BusinessRule,
+  type CurrentJobSummary,
+  type MemoryOverview,
+} from '@/lib/job-details-api';
 
-const intakeActions: {
-  title: string;
-  detail: string;
-  icon: MaterialIconName;
-  accent: string;
-  background: string;
-}[] = [
-  {
-    title: 'Add job photos',
-    detail: 'Fence, drywall, deck, floor, roof, or whatever needs pricing.',
-    icon: 'add-a-photo',
-    accent: '#116466',
-    background: '#E0F2F1',
-  },
-  {
-    title: 'Record voice notes',
-    detail: 'Talk like you are explaining the job to your helper.',
-    icon: 'keyboard-voice',
-    accent: '#7C2D12',
-    background: '#FFEDD5',
-  },
-  {
-    title: 'Drop old invoices',
-    detail: 'FastBid pulls prices, scope language, and lessons learned.',
-    icon: 'receipt-long',
-    accent: '#1D4ED8',
-    background: '#DBEAFE',
-  },
-];
+type JobsScreenData = {
+  businessRules: BusinessRule[];
+  jobs: CurrentJobSummary[];
+  memory: MemoryOverview;
+};
 
-const lineItems = [
-  ['Demo and haul away', '$340'],
-  ['Replacement boards and hardware', '$620'],
-  ['Two-person crew, one day', '$860'],
-  ['Overhead and target margin', '$280'],
-];
+export default function JobsScreen() {
+  const router = useRouter();
+  const [screenData, setScreenData] = useState<JobsScreenData | null>(null);
 
-const riskFlags = [
-  'Confirm existing posts are reusable before final quote.',
-  'Last similar repair ran half a day long because the gate sagged.',
-  'Exclude stain unless the customer approves it as an add-on.',
-];
+  useEffect(() => {
+    let isMounted = true;
 
-export default function BidScreen() {
+    getCurrentJobs().then((data) => {
+      if (isMounted) {
+        setScreenData(data);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const openBid = (jobId: string) => {
+    router.push(`/(tabs)/explore?jobId=${jobId}`);
+  };
+
+  if (!screenData) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <View style={styles.logoMark}>
+            <MaterialIcons name="construction" size={28} color="#FFFFFF" />
+          </View>
+          <Text style={styles.loadingTitle}>Loading home</Text>
+          <Text style={styles.loadingCopy}>Pulling the bid queue from the mock API.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const { businessRules, jobs, memory } = screenData;
+  const featuredJob = jobs[0];
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.logoMark}>
-            <MaterialIcons name="bolt" size={28} color="#FFFFFF" />
+          <Text style={styles.kicker}>{memory.kicker}</Text>
+          <Text style={styles.title}>{memory.headline}</Text>
+          <Text style={styles.subtitle}>{memory.description}</Text>
+        </View>
+
+        <View style={styles.jobPhoto}>
+          <View style={styles.photoTopBar}>
+            <View style={styles.photoDot} />
+            <Text style={styles.photoLabel}>today estimate</Text>
           </View>
-          <View style={styles.headerText}>
-            <Text style={styles.kicker}>FastBid</Text>
-            <Text style={styles.title}>Photos and voice notes into a clean bid.</Text>
+          <View style={styles.fenceLine}>
+            <View style={styles.fencePost} />
+            <View style={styles.fenceBoard} />
+            <View style={styles.fenceBoardShort} />
+            <View style={styles.fencePost} />
+          </View>
+          <View style={styles.quoteStrip}>
+            <Text style={styles.quoteLabel}>{featuredJob.name}</Text>
+            <Text style={styles.quoteValue}>{featuredJob.price}</Text>
           </View>
         </View>
 
-        <View style={styles.quickJob}>
-          <View style={styles.quickJobTop}>
+        <View style={styles.metricRow}>
+          {memory.metrics.map((metric) => (
+            <View key={metric.label} style={styles.metric}>
+              <Text style={styles.metricValue}>{metric.value}</Text>
+              <Text style={styles.metricLabel}>{metric.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.panel}>
+          <View style={styles.panelHeader}>
             <View>
-              <Text style={styles.sectionLabel}>Current job</Text>
-              <Text style={styles.jobTitle}>Johnson fence repair</Text>
+              <Text style={styles.sectionLabel}>{memory.currentJobsLabel}</Text>
+              <Text style={styles.sectionTitle}>{memory.currentJobsTitle}</Text>
             </View>
-            <View style={styles.statusPill}>
-              <MaterialIcons name="auto-awesome" size={15} color="#14532D" />
-              <Text style={styles.statusText}>Draft ready</Text>
+            <View style={styles.sourceBadge}>
+              <MaterialIcons name="touch-app" size={15} color="#0F766E" />
+              <Text style={styles.sourceBadgeText}>tap to open</Text>
             </View>
           </View>
 
-          <View style={styles.voiceNote}>
-            <MaterialIcons name="graphic-eq" size={28} color="#0F172A" />
-            <Text style={styles.voiceCopy}>
-              Customer needs roughly 18 feet replaced, haul-away included, stain optional.
-            </Text>
-          </View>
-
-          <View style={styles.actionGrid}>
-            {intakeActions.map((action) => (
-              <Pressable key={action.title} style={styles.actionButton}>
-                <View style={[styles.actionIcon, { backgroundColor: action.background }]}>
-                  <MaterialIcons name={action.icon} size={24} color={action.accent} />
+          <View style={styles.jobList}>
+            {jobs.map((job) => (
+              <Pressable key={job.id} onPress={() => openBid(job.id)} style={styles.jobCard}>
+                <View style={styles.jobCardTop}>
+                  <View style={styles.jobNameBlock}>
+                    <Text style={styles.jobName}>{job.name}</Text>
+                    <Text style={styles.jobDate}>{job.date}</Text>
+                  </View>
+                  <View style={styles.priceBlock}>
+                    <Text style={styles.jobPrice}>{job.price}</Text>
+                    <Text style={styles.jobMargin}>{job.margin} margin</Text>
+                  </View>
+                  <MaterialIcons name="chevron-right" size={24} color="#64748B" />
                 </View>
-                <Text style={styles.actionTitle}>{action.title}</Text>
-                <Text style={styles.actionDetail}>{action.detail}</Text>
+                <Text style={styles.jobNote}>{job.note}</Text>
               </Pressable>
             ))}
           </View>
         </View>
 
-        <View style={styles.bidPreview}>
-          <View style={styles.previewTop}>
-            <View>
-              <Text style={styles.darkSectionLabel}>Recommended quote</Text>
-              <Text style={styles.price}>$2,100</Text>
-            </View>
-            <View style={styles.confidence}>
-              <Text style={styles.confidenceValue}>82%</Text>
-              <Text style={styles.confidenceLabel}>confidence</Text>
-            </View>
-          </View>
+        <View style={styles.panel}>
+          <Text style={styles.sectionLabel}>Estimator defaults</Text>
+          <Text style={styles.sectionTitle}>Rules FastBid should apply</Text>
 
-          <Text style={styles.scopeText}>
-            Replace damaged fence boards, reuse existing posts if sound, install matching hardware,
-            and haul away damaged material. Stain and gate adjustment are separate add-ons.
-          </Text>
-
-          <View style={styles.table}>
-            {lineItems.map(([label, value]) => (
-              <View key={label} style={styles.tableRow}>
-                <Text style={styles.tableLabel}>{label}</Text>
-                <Text style={styles.tableValue}>{value}</Text>
+          <View style={styles.ruleList}>
+            {businessRules.map((rule) => (
+              <View key={rule.title} style={styles.ruleItem}>
+                <View style={styles.ruleIcon}>
+                  <MaterialIcons name={rule.icon} size={22} color="#0F172A" />
+                </View>
+                <View style={styles.ruleCopy}>
+                  <Text style={styles.ruleTitle}>{rule.title}</Text>
+                  <Text style={styles.ruleDetail}>{rule.detail}</Text>
+                </View>
               </View>
             ))}
           </View>
+        </View>
 
-          <View style={styles.buttonRow}>
-            <Pressable style={styles.primaryButton}>
-              <MaterialIcons name="send" size={18} color="#FFFFFF" />
-              <Text style={styles.primaryButtonText}>Send bid</Text>
-            </Pressable>
-            <Pressable style={styles.secondaryButton}>
-              <MaterialIcons name="edit" size={18} color="#0F172A" />
-              <Text style={styles.secondaryButtonText}>Tune price</Text>
-            </Pressable>
+        <View style={styles.architecturePanel}>
+          <MaterialIcons name="hub" size={26} color="#FFFFFF" />
+          <View style={styles.architectureCopy}>
+            <Text style={styles.architectureTitle}>MVP AI stack</Text>
+            <Text style={styles.architectureText}>
+              OpenAI for extraction, RAG-grounded drafting, and risk review. Postgres plus pgvector
+              for company memory. Keep the model layer swappable for local Ollama experiments later.
+            </Text>
           </View>
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Before you send</Text>
-          <Text style={styles.sectionHint}>FastBid keeps the owner in control.</Text>
-        </View>
-
-        <View style={styles.riskList}>
-          {riskFlags.map((risk) => (
-            <View key={risk} style={styles.riskItem}>
-              <MaterialIcons name="warning-amber" size={21} color="#B45309" />
-              <Text style={styles.riskText}>{risk}</Text>
-            </View>
-          ))}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -155,19 +162,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F6F2',
   },
-  container: {
-    alignSelf: 'center',
-    gap: 18,
-    maxWidth: 760,
-    padding: 20,
-    paddingBottom: 34,
-    width: '100%',
-  },
-  header: {
+  loadingContainer: {
     alignItems: 'center',
-    flexDirection: 'row',
-    gap: 14,
-    paddingTop: 8,
+    flex: 1,
+    gap: 10,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  loadingTitle: {
+    color: '#111827',
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: 0,
+    marginTop: 10,
+  },
+  loadingCopy: {
+    color: '#64748B',
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 21,
+    maxWidth: 300,
+    textAlign: 'center',
   },
   logoMark: {
     alignItems: 'center',
@@ -177,33 +192,155 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 52,
   },
-  headerText: {
-    flex: 1,
-    gap: 3,
+  container: {
+    alignSelf: 'center',
+    gap: 18,
+    maxWidth: 760,
+    padding: 20,
+    paddingBottom: 34,
+    width: '100%',
+  },
+  header: {
+    gap: 8,
+    paddingTop: 8,
   },
   kicker: {
-    color: '#116466',
-    fontSize: 15,
-    fontWeight: '800',
+    color: '#0F766E',
+    fontSize: 13,
+    fontWeight: '900',
     letterSpacing: 0,
+    textTransform: 'uppercase',
   },
   title: {
     color: '#111827',
-    flexShrink: 1,
-    fontSize: 28,
+    fontSize: 29,
     fontWeight: '900',
     letterSpacing: 0,
-    lineHeight: 31,
+    lineHeight: 33,
   },
-  quickJob: {
+  subtitle: {
+    color: '#475569',
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 23,
+  },
+  jobPhoto: {
+    backgroundColor: '#D9E8DF',
+    borderRadius: 8,
+    minHeight: 184,
+    overflow: 'hidden',
+    padding: 14,
+  },
+  photoTopBar: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.82)',
+    borderRadius: 999,
+    flexDirection: 'row',
+    gap: 7,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    zIndex: 2,
+  },
+  photoDot: {
+    backgroundColor: '#22C55E',
+    borderRadius: 999,
+    height: 7,
+    width: 7,
+  },
+  photoLabel: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0,
+    textTransform: 'uppercase',
+  },
+  fenceLine: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    gap: 10,
+    height: 126,
+    justifyContent: 'center',
+    paddingTop: 36,
+  },
+  fencePost: {
+    backgroundColor: '#7C2D12',
+    borderRadius: 4,
+    height: 112,
+    width: 22,
+  },
+  fenceBoard: {
+    backgroundColor: '#A16207',
+    borderRadius: 5,
+    height: 88,
+    width: 54,
+  },
+  fenceBoardShort: {
+    backgroundColor: '#92400E',
+    borderRadius: 5,
+    height: 64,
+    width: 54,
+  },
+  quoteStrip: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingHorizontal: 13,
+    paddingVertical: 12,
+  },
+  quoteLabel: {
+    color: '#334155',
+    flex: 1,
+    flexShrink: 1,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  quoteValue: {
+    color: '#0F172A',
+    fontSize: 18,
+    fontWeight: '900',
+    marginLeft: 12,
+  },
+  metricRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  metric: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E7E5E4',
     borderRadius: 8,
     borderWidth: 1,
-    gap: 16,
+    flex: 1,
+    minHeight: 88,
+    padding: 13,
+  },
+  metricValue: {
+    color: '#111827',
+    fontSize: 25,
+    fontWeight: '900',
+    letterSpacing: 0,
+  },
+  metricLabel: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '800',
+    lineHeight: 16,
+    textTransform: 'uppercase',
+  },
+  panel: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E7E5E4',
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 14,
     padding: 16,
   },
-  quickJobTop: {
+  panelHeader: {
     alignItems: 'flex-start',
     flexDirection: 'row',
     gap: 10,
@@ -212,230 +349,140 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: '#64748B',
     fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0,
-    textTransform: 'uppercase',
-  },
-  darkSectionLabel: {
-    color: '#BAE6FD',
-    fontSize: 12,
     fontWeight: '900',
     letterSpacing: 0,
     textTransform: 'uppercase',
   },
-  jobTitle: {
+  sectionTitle: {
     color: '#111827',
-    fontSize: 22,
+    fontSize: 21,
     fontWeight: '900',
     letterSpacing: 0,
-    lineHeight: 27,
+    lineHeight: 26,
     marginTop: 2,
   },
-  statusPill: {
+  sourceBadge: {
     alignItems: 'center',
-    backgroundColor: '#DCFCE7',
+    backgroundColor: '#CCFBF1',
     borderRadius: 999,
     flexDirection: 'row',
     gap: 5,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  statusText: {
-    color: '#14532D',
+  sourceBadgeText: {
+    color: '#0F766E',
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '900',
+    textTransform: 'uppercase',
   },
-  voiceNote: {
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    flexDirection: 'row',
-    gap: 12,
-    padding: 14,
-  },
-  voiceCopy: {
-    color: '#334155',
-    flex: 1,
-    flexShrink: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    lineHeight: 21,
-  },
-  actionGrid: {
+  jobList: {
     gap: 10,
   },
-  actionButton: {
-    alignItems: 'center',
-    borderColor: '#E5E7EB',
+  jobCard: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
     borderRadius: 8,
     borderWidth: 1,
+    gap: 9,
+    padding: 13,
+  },
+  jobCardTop: {
+    alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 12,
-    minHeight: 76,
-    padding: 12,
+    gap: 10,
+    justifyContent: 'space-between',
   },
-  actionIcon: {
-    alignItems: 'center',
-    borderRadius: 8,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
+  jobNameBlock: {
+    flex: 1,
+    flexShrink: 1,
   },
-  actionTitle: {
+  jobName: {
     color: '#111827',
-    flexBasis: 116,
-    flexGrow: 0,
-    flexShrink: 0,
     fontSize: 15,
     fontWeight: '900',
     lineHeight: 19,
   },
-  actionDetail: {
+  jobDate: {
     color: '#64748B',
-    flex: 1,
-    flexShrink: 1,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  bidPreview: {
-    backgroundColor: '#172554',
-    borderRadius: 8,
-    gap: 16,
-    padding: 18,
-  },
-  previewTop: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  price: {
-    color: '#FFFFFF',
-    fontSize: 44,
-    fontWeight: '900',
-    letterSpacing: 0,
-    lineHeight: 50,
-    marginTop: 2,
-  },
-  confidence: {
-    alignItems: 'flex-end',
-    backgroundColor: '#DBEAFE',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  confidenceValue: {
-    color: '#1E3A8A',
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  confidenceLabel: {
-    color: '#1E40AF',
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-  },
-  scopeText: {
-    color: '#E0F2FE',
-    fontSize: 15,
-    fontWeight: '600',
-    lineHeight: 22,
-  },
-  table: {
-    backgroundColor: '#0F1E47',
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  tableRow: {
-    alignItems: 'center',
-    borderBottomColor: '#263A74',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 13,
-    paddingVertical: 11,
-  },
-  tableLabel: {
-    color: '#CBD5E1',
-    flex: 1,
-    flexShrink: 1,
-    fontSize: 14,
-    lineHeight: 18,
-  },
-  tableValue: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '900',
-    marginLeft: 12,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: '#16A34A',
-    borderRadius: 8,
-    flex: 1,
-    flexDirection: 'row',
-    gap: 7,
-    justifyContent: 'center',
-    minHeight: 48,
-    paddingHorizontal: 12,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '900',
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    flex: 1,
-    flexDirection: 'row',
-    gap: 7,
-    justifyContent: 'center',
-    minHeight: 48,
-    paddingHorizontal: 12,
-  },
-  secondaryButtonText: {
-    color: '#0F172A',
-    fontSize: 15,
-    fontWeight: '900',
-  },
-  sectionHeader: {
-    gap: 2,
-  },
-  sectionTitle: {
-    color: '#111827',
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: 0,
-  },
-  sectionHint: {
-    color: '#64748B',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  riskList: {
-    gap: 10,
-  },
-  riskItem: {
-    alignItems: 'flex-start',
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
-    borderRadius: 8,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
-    padding: 13,
-  },
-  riskText: {
-    color: '#78350F',
-    flex: 1,
-    flexShrink: 1,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
+    marginTop: 1,
+  },
+  priceBlock: {
+    alignItems: 'flex-end',
+  },
+  jobPrice: {
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  jobMargin: {
+    color: '#15803D',
+    fontSize: 12,
+    fontWeight: '800',
+    marginTop: 1,
+  },
+  jobNote: {
+    color: '#475569',
+    fontSize: 14,
+    fontWeight: '600',
     lineHeight: 20,
+  },
+  ruleList: {
+    gap: 12,
+  },
+  ruleItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  ruleIcon: {
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    height: 46,
+    justifyContent: 'center',
+    width: 46,
+  },
+  ruleCopy: {
+    flex: 1,
+    flexShrink: 1,
+  },
+  ruleTitle: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '900',
+    lineHeight: 20,
+  },
+  ruleDetail: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 19,
+  },
+  architecturePanel: {
+    alignItems: 'flex-start',
+    backgroundColor: '#116466',
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 13,
+    padding: 16,
+  },
+  architectureCopy: {
+    flex: 1,
+    flexShrink: 1,
+    gap: 5,
+  },
+  architectureTitle: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '900',
+  },
+  architectureText: {
+    color: '#DCFCE7',
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 21,
   },
 });
