@@ -1,50 +1,38 @@
-# Welcome to your Expo app 👋
+# FastBid
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+FastBid is a mobile-first bid assistant for contractors who quote jobs from photos, voice notes, old invoices, and memory.
 
-## Get started
+The first prototype focuses on the core promise:
 
-1. Install dependencies
+- Capture job context without typing.
+- Draft a customer-ready bid.
+- Show similar past jobs as evidence.
+- Surface risk notes before the contractor sends the quote.
 
-   ```bash
-   npm install
-   ```
+Read the product direction in [docs/product-brief.md](docs/product-brief.md).
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run The App
 
 ```bash
-npm run reset-project
+npm install
+npm run start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+For the web preview:
 
-## Learn more
+```bash
+npm run web
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Current Prototype
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- `Bid` tab: mobile bid intake, generated quote preview, line items, and pre-send risk flags.
+- `Memory` tab: similar historical jobs, estimator defaults, and the intended AI/RAG stack.
 
-## Join the community
+## MVP Architecture Direction
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Expo React Native frontend.
+- OpenAI API for first-pass extraction, drafting, and risk review.
+- Postgres plus pgvector for company-specific bid memory.
+- S3-compatible storage for photos, PDFs, invoices, and generated bid artifacts.
+- A swappable model provider so local models can be tested later for lower-risk tasks.
