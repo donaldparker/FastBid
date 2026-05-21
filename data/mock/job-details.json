@@ -1,0 +1,216 @@
+{
+  "brand": {
+    "name": "FastBid",
+    "headline": "Photos and voice notes into a clean bid."
+  },
+  "memory": {
+    "kicker": "Home",
+    "headline": "The bid gets smarter after every job.",
+    "description": "FastBid should remember what the owner charged, which jobs won, and where profit leaked.",
+    "metrics": [
+      {
+        "value": "128",
+        "label": "old bids"
+      },
+      {
+        "value": "41",
+        "label": "invoices"
+      },
+      {
+        "value": "19%",
+        "label": "avg margin"
+      }
+    ],
+    "currentJobsLabel": "Bid queue",
+    "currentJobsTitle": "Current jobs"
+  },
+  "intakeActions": [
+    {
+      "title": "Add job photos",
+      "detail": "Fence, drywall, deck, floor, roof, or whatever needs pricing.",
+      "icon": "add-a-photo",
+      "accent": "#116466",
+      "background": "#E0F2F1"
+    },
+    {
+      "title": "Record voice notes",
+      "detail": "Talk like you are explaining the job to your helper.",
+      "icon": "keyboard-voice",
+      "accent": "#7C2D12",
+      "background": "#FFEDD5"
+    },
+    {
+      "title": "Drop old invoices",
+      "detail": "FastBid pulls prices, scope language, and lessons learned.",
+      "icon": "receipt-long",
+      "accent": "#1D4ED8",
+      "background": "#DBEAFE"
+    }
+  ],
+  "businessRules": [
+    {
+      "icon": "paid",
+      "title": "Default labor rate",
+      "detail": "$86 per crew hour for two-person repair jobs."
+    },
+    {
+      "icon": "percent",
+      "title": "Target margin",
+      "detail": "Aim for 22% to 28% after material markup and overhead."
+    },
+    {
+      "icon": "block",
+      "title": "Usual exclusions",
+      "detail": "Permits, hidden rot, paint/stain, electrical, and customer-supplied materials."
+    }
+  ],
+  "jobs": [
+    {
+      "id": "johnson-fence-repair",
+      "summary": {
+        "name": "Johnson fence repair",
+        "date": "Today",
+        "price": "$2,100",
+        "margin": "22%",
+        "note": "Draft ready from photos, voice notes, and three similar fence repairs."
+      },
+      "currentJob": {
+        "label": "Current job",
+        "title": "Johnson fence repair",
+        "status": "Draft ready",
+        "voiceNote": "Customer needs roughly 18 feet replaced, haul-away included, stain optional."
+      },
+      "generatedBid": {
+        "label": "Recommended quote",
+        "recommendedQuote": "$2,100",
+        "confidence": "82%",
+        "scope": "Replace damaged fence boards, reuse existing posts if sound, install matching hardware, and haul away damaged material. Stain and gate adjustment are separate add-ons.",
+        "lineItems": [
+          {
+            "label": "Demo and haul away",
+            "value": "$340"
+          },
+          {
+            "label": "Replacement boards and hardware",
+            "value": "$620"
+          },
+          {
+            "label": "Two-person crew, one day",
+            "value": "$860"
+          },
+          {
+            "label": "Overhead and target margin",
+            "value": "$280"
+          }
+        ]
+      },
+      "preSendReview": {
+        "title": "Before you send",
+        "hint": "FastBid keeps the owner in control.",
+        "riskFlags": [
+          "Confirm existing posts are reusable before final quote.",
+          "Last similar repair ran half a day long because the gate sagged.",
+          "Exclude stain unless the customer approves it as an add-on."
+        ]
+      }
+    },
+    {
+      "id": "lopez-side-yard-fence",
+      "summary": {
+        "name": "Lopez side-yard fence",
+        "date": "Today",
+        "price": "$2,250",
+        "margin": "24%",
+        "note": "Needs haul-away, gate adjustment option, and a clear stain exclusion."
+      },
+      "currentJob": {
+        "label": "Current job",
+        "title": "Lopez side-yard fence",
+        "status": "Needs review",
+        "voiceNote": "Customer wants the side-yard run tightened up, damaged boards replaced, and the gate adjusted if it still drags."
+      },
+      "generatedBid": {
+        "label": "Recommended quote",
+        "recommendedQuote": "$2,250",
+        "confidence": "79%",
+        "scope": "Remove damaged side-yard fence boards, replace matching boards and fasteners, adjust gate alignment if hardware is reusable, and haul away debris. Stain is excluded unless approved separately.",
+        "lineItems": [
+          {
+            "label": "Fence board replacement",
+            "value": "$720"
+          },
+          {
+            "label": "Gate adjustment allowance",
+            "value": "$290"
+          },
+          {
+            "label": "Crew labor and haul-away",
+            "value": "$930"
+          },
+          {
+            "label": "Overhead and margin",
+            "value": "$310"
+          }
+        ]
+      },
+      "preSendReview": {
+        "title": "Before you send",
+        "hint": "FastBid keeps the owner in control.",
+        "riskFlags": [
+          "Confirm whether the gate hardware can be reused.",
+          "Photo angle does not show the full post condition.",
+          "Stain should stay excluded unless the customer picks a color."
+        ]
+      }
+    },
+    {
+      "id": "brown-deck-rail-patch",
+      "summary": {
+        "name": "Brown deck rail patch",
+        "date": "Tomorrow",
+        "price": "$1,740",
+        "margin": "18%",
+        "note": "Photos suggest possible hidden rot, so the draft includes a framing exclusion."
+      },
+      "currentJob": {
+        "label": "Current job",
+        "title": "Brown deck rail patch",
+        "status": "Risk flagged",
+        "voiceNote": "Deck rail is loose on the corner. Customer wants it safe before guests come over this weekend."
+      },
+      "generatedBid": {
+        "label": "Recommended quote",
+        "recommendedQuote": "$1,740",
+        "confidence": "68%",
+        "scope": "Secure loose deck rail section, replace damaged balusters where visible, reinforce accessible connections, and clean up work area. Hidden rot, framing replacement, and finish work are excluded.",
+        "lineItems": [
+          {
+            "label": "Rail repair materials",
+            "value": "$310"
+          },
+          {
+            "label": "Fasteners and blocking",
+            "value": "$180"
+          },
+          {
+            "label": "One-day repair labor",
+            "value": "$960"
+          },
+          {
+            "label": "Overhead and margin",
+            "value": "$290"
+          }
+        ]
+      },
+      "preSendReview": {
+        "title": "Before you send",
+        "hint": "FastBid keeps the owner in control.",
+        "riskFlags": [
+          "Inspect for rot before guaranteeing final price.",
+          "Past deck rail job lost margin when framing damage was missed.",
+          "Exclude code upgrades unless the customer approves a larger repair."
+        ]
+      }
+    }
+  ]
+}
