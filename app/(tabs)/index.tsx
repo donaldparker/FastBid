@@ -1,5 +1,5 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,11 +19,13 @@ type JobsScreenData = {
 
 export default function JobsScreen() {
   const router = useRouter();
+  const { refresh } = useLocalSearchParams<{ refresh?: string }>();
   const [screenData, setScreenData] = useState<JobsScreenData | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
+    setScreenData(null);
     getCurrentJobs().then((data) => {
       if (isMounted) {
         setScreenData(data);
@@ -33,7 +35,7 @@ export default function JobsScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [refresh]);
 
   const openBid = (jobId: string) => {
     router.push(`/(tabs)/explore?jobId=${jobId}`);

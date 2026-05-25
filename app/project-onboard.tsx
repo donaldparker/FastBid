@@ -25,6 +25,7 @@ import {
   type PlaceholderRequest,
   type ProjectDraftPayload,
 } from '@/lib/mock-requests';
+import { addSubmittedDraftBid } from '@/lib/job-details-api';
 import type { DraftLineItem, DraftPhoto, PricingMode } from '@/lib/project-draft-types';
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -53,6 +54,7 @@ type ProjectDraftAction =
   | { type: 'lineItemAdded'; item: DraftLineItem }
   | { type: 'lineItemFocusHandled' }
   | { type: 'lineItemTextChanged'; id: string; text: string }
+  | { type: 'lineItemPriceChanged'; id: string; value: string }
   | { type: 'lineItemModeChanged'; id: string; mode: PricingMode }
   | { type: 'lineItemPhotoAdded'; lineItemId: string; photo: DraftPhoto }
   | { type: 'lineItemPhotoRemoved'; lineItemId: string; photoId: string }
@@ -105,6 +107,14 @@ function projectDraftReducer(
         ...state,
         lineItems: state.lineItems.map((item) =>
           item.id === action.id ? { ...item, text: action.text } : item
+        ),
+        request: null,
+      };
+    case 'lineItemPriceChanged':
+      return {
+        ...state,
+        lineItems: state.lineItems.map((item) =>
+          item.id === action.id ? { ...item, price: action.value } : item
         ),
         request: null,
       };
@@ -277,6 +287,7 @@ export default function ProjectOnboardScreen() {
         id,
         mode: 'net',
         photos: [],
+        price: '',
         text: '',
       },
       type: 'lineItemAdded',
@@ -285,6 +296,11 @@ export default function ProjectOnboardScreen() {
 
   const updateLineItemText = (id: string, text: string) => {
     dispatch({ id, text, type: 'lineItemTextChanged' });
+  };
+
+  const updateLineItemPrice = (id: string, value: string) => {
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    dispatch({ id, type: 'lineItemPriceChanged', value: numericValue });
   };
 
   const updateLineItemMode = (id: string, mode: PricingMode) => {
@@ -332,8 +348,13 @@ export default function ProjectOnboardScreen() {
 
     try {
       const request = await submitProjectDraftRequest(createProjectDraftPayload(state));
+      addSubmittedDraftBid(request);
 
       dispatch({ request, type: 'submitSucceeded' });
+      router.replace({
+        params: { refresh: request.requestId },
+        pathname: '/(tabs)',
+      });
     } catch {
       dispatch({ error: 'Could not submit project draft.', type: 'submitFailed' });
     }
@@ -429,33 +450,6 @@ export default function ProjectOnboardScreen() {
                   <View key={lineItem.id} style={styles.lineItemCard}>
                     <View style={styles.lineItemTop}>
                       <Text style={styles.lineItemLabel}>Line item {index + 1}</Text>
-                      <View style={styles.radioGroup}>
-                        {(['net', 'cost'] as PricingMode[]).map((mode) => (
-                          <Pressable
-                            accessibilityRole="radio"
-                            accessibilityState={{ checked: lineItem.mode === mode }}
-                            key={mode}
-                            onPress={() => updateLineItemMode(lineItem.id, mode)}
-                            style={[
-                              styles.radioOption,
-                              lineItem.mode === mode && styles.radioOptionActive,
-                            ]}>
-                            <View
-                              style={[
-                                styles.radioDot,
-                                lineItem.mode === mode && styles.radioDotActive,
-                              ]}
-                            />
-                            <Text
-                              style={[
-                                styles.radioText,
-                                lineItem.mode === mode && styles.radioTextActive,
-                              ]}>
-                              {mode === 'net' ? 'Net' : 'Cost'}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </View>
                     </View>
                     <TextInput
                       multiline
@@ -517,6 +511,55 @@ export default function ProjectOnboardScreen() {
                           </Pressable>
                         </View>
                       )}
+
+                      <View style={styles.priceBuilder}>
+                        <View style={styles.priceCopy}>
+                          <Text style={styles.priceTitle}>Price</Text>
+                          <Text style={styles.priceDetail}>
+                            Add the amount and choose whether it is net or cost.
+                          </Text>
+                        </View>
+                        <View style={styles.priceRow}>
+                          <View style={styles.priceInputWrap}>
+                            <Text style={styles.pricePrefix}>$</Text>
+                            <TextInput
+                              keyboardType="numeric"
+                              onChangeText={(value) => updateLineItemPrice(lineItem.id, value)}
+                              placeholder="0"
+                              placeholderTextColor="#94A3B8"
+                              style={styles.priceInput}
+                              value={lineItem.price}
+                            />
+                          </View>
+                          <View style={styles.radioGroup}>
+                            {(['net', 'cost'] as PricingMode[]).map((mode) => (
+                              <Pressable
+                                accessibilityRole="radio"
+                                accessibilityState={{ checked: lineItem.mode === mode }}
+                                key={mode}
+                                onPress={() => updateLineItemMode(lineItem.id, mode)}
+                                style={[
+                                  styles.radioOption,
+                                  lineItem.mode === mode && styles.radioOptionActive,
+                                ]}>
+                                <View
+                                  style={[
+                                    styles.radioDot,
+                                    lineItem.mode === mode && styles.radioDotActive,
+                                  ]}
+                                />
+                                <Text
+                                  style={[
+                                    styles.radioText,
+                                    lineItem.mode === mode && styles.radioTextActive,
+                                  ]}>
+                                  {mode === 'net' ? 'Net' : 'Cost'}
+                                </Text>
+                              </Pressable>
+                            ))}
+                          </View>
+                        </View>
+                      </View>
                     </View>
                   </View>
                 ))}
@@ -796,7 +839,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 10,
-    justifyContent: 'space-between',
   },
   lineItemLabel: {
     color: '#334155',
@@ -914,6 +956,57 @@ const styles = StyleSheet.create({
   },
   photoStack: {
     gap: 11,
+  },
+  priceBuilder: {
+    borderTopColor: '#E2E8F0',
+    borderTopWidth: 1,
+    gap: 10,
+    paddingTop: 12,
+  },
+  priceCopy: {
+    gap: 2,
+  },
+  priceTitle: {
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  priceDetail: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+    marginTop: 2,
+  },
+  priceRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  priceInputWrap: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+    minHeight: 46,
+    paddingHorizontal: 12,
+  },
+  pricePrefix: {
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '900',
+    marginRight: 8,
+  },
+  priceInput: {
+    color: '#0F172A',
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+    minHeight: 46,
+    paddingVertical: 0,
   },
   photoTile: {
     alignItems: 'center',
